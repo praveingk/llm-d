@@ -160,6 +160,8 @@ RUN mkdir -p /export/wheels && \
 
 FROM base AS final
 
+COPY --from=build_rixl ${UCCL_PREFIX} ${UCCL_PREFIX}
+
 RUN --mount=type=bind,from=build_rixl,src=/export/wheels,target=/export/wheels \
     --mount=type=bind,from=build_rixl,src=/export/packages,target=/export/packages \
     --mount=type=cache,target=/root/.cache/uv \

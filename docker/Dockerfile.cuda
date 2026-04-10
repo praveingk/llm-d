@@ -400,6 +400,9 @@ COPY --from=builder /tmp/gdrcopy_libs /tmp/
 # Copy UCX libraries from builder
 COPY --from=builder /opt/ucx /opt/ucx
 
+# Copy UCCL libraries from builder
+COPY --from=builder /opt/uccl /opt/uccl
+
 RUN if [ -d /tmp/gdrcopy_libs ]; then \
         if [ "${TARGETOS:-rhel}" = "ubuntu" ]; then \
             if [ "${TARGETPLATFORM:-linux/amd64}" = "linux/arm64" ]; then \

@@ -21,9 +21,16 @@ git checkout -q "${UCCL_VERSION}"
 
 mkdir -p "${UCCL_PREFIX}/lib" "${UCCL_PREFIX}/include"
 
-cd p2p
-make install-deps
+# Install pre-requisites
+if [ "${TARGETOS:-rhel}" = "ubuntu" ]; then
+    apt-get install -y --no-install-recommends libelf-dev
+else
+    dnf install -y elfutils-libelf-devel
+fi
 
+uv pip install nanobind
+
+# Transport selection - this will be made runtime
 case "${UCCL_TRANSPORT}" in
   efa)
     USE_EFA=1 make -j
@@ -39,6 +46,8 @@ case "${UCCL_TRANSPORT}" in
     ;;
 esac
 
+# Build UCCL P2P
+cd p2p
 PREFIX="${UCCL_PREFIX}" make install
 
 cd /tmp
