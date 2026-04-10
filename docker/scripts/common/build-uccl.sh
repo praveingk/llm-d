@@ -11,8 +11,11 @@ set -Eeux
 # Optional environment variables:
 # - UCCL_TRANSPORT: transport backend to use (default: rdma)
 #   Options: rdma, efa, tcp, tcpx
+# - UCCL_DEVICE: device target (default: cuda)
+#   Options: cuda, rocm
 
 UCCL_TRANSPORT="${UCCL_TRANSPORT:-rdma}"
+UCCL_DEVICE="${UCCL_DEVICE:-cuda}"
 
 cd /tmp
 
@@ -28,27 +31,38 @@ else
     dnf install -y elfutils-libelf-devel
 fi
 
-uv pip install nanobind
+if [ -n "${VIRTUAL_ENV:-}" ]; then
+    uv pip install nanobind
+else
+    uv pip install --system nanobind
+fi
 
-# Transport selection - this will be made runtime
+cd p2p
+
+# Select Makefile based on device
+if [ "${UCCL_DEVICE}" = "rocm" ]; then
+    MAKEFILE="Makefile.rocm"
+else
+    MAKEFILE="Makefile"
+fi
+
+# Transport selection and build
 case "${UCCL_TRANSPORT}" in
   efa)
-    USE_EFA=1 make -j
+    USE_EFA=1 make -f "${MAKEFILE}" -j
     ;;
   tcp)
-    USE_TCP=1 make -j
+    USE_TCP=1 make -f "${MAKEFILE}" -j
     ;;
   tcpx)
-    USE_TCPX=1 make -j
+    USE_TCPX=1 make -f "${MAKEFILE}" -j
     ;;
   *)
-    make -j
+    make -f "${MAKEFILE}" -j
     ;;
 esac
 
-# Build UCCL P2P
-cd p2p
-PREFIX="${UCCL_PREFIX}" make install
+PREFIX="${UCCL_PREFIX}" make -f "${MAKEFILE}" install
 
 cd /tmp
 rm -rf uccl

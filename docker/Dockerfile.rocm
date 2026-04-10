@@ -111,7 +111,7 @@ ENV LD_LIBRARY_PATH=${UCX_PATH}/lib:${LD_LIBRARY_PATH}
 
 # Build UCCL
 COPY docker/scripts/common/build-uccl.sh /tmp/build-uccl.sh
-RUN TARGETOS=ubuntu /tmp/build-uccl.sh && \
+RUN TARGETOS=ubuntu UCCL_DEVICE=rocm /tmp/build-uccl.sh && \
     rm -f /tmp/build-uccl.sh
     
 ENV LD_LIBRARY_PATH=${UCCL_PREFIX}/lib:${LD_LIBRARY_PATH}
