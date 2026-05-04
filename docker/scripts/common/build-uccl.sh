@@ -27,7 +27,7 @@ mkdir -p "${UCCL_PREFIX}/lib" "${UCCL_PREFIX}/include"
 
 # Install pre-requisites
 if [ "${TARGETOS:-rhel}" = "ubuntu" ]; then
-    apt-get install -y --no-install-recommends libelf-dev
+    apt-get update && apt-get install -y --no-install-recommends libelf-dev
 else
     dnf install -y elfutils-libelf-devel
 fi
