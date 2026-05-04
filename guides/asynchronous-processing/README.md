@@ -1,4 +1,4 @@
-# Experimental Feature: Asynchronous Processing with Async Processor
+# [Experimental] Asynchronous Processing with Async Processor
 
 The [Async Processor](https://github.com/llm-d-incubation/llm-d-async) provides a way to process inference requests asynchronously using a queue-based architecture. This is ideal for latency-insensitive workloads or for filling "slack" capacity in your inference pool.
 
@@ -23,22 +23,22 @@ Before installing Async Processor, ensure you have:
    - For local development, you can use **Kind** or **Minikube**.
    - For production, GKE, AKS, or OpenShift are supported.
 2. **Gateway control plane**: Configure and deploy your [Gateway control plane](../prereq/gateway-provider/README.md) (e.g., Istio) before installation.
-3. **llm-d Inference Stack**: Async Processor requires an existing [Intelligent Inference Scheduling](../inference-scheduling/README.md) stack to dispatch requests to.
+3. **llm-d Inference Stack**: Async Processor requires an existing [optimized baseline](../optimized-baseline/README.md) stack to dispatch requests to.
 
 ## Installation
 
 Async Processor can be installed via Helm. We provide a `helmfile` for easy deployment.
 
-### Step 1: Configure Inference Gateway URL
+### Step 1: Configure llm-d Router URL
 
 The Async Processor needs to know where to send the requests it pulls from the queue. This is configured via the `IGW_BASE_URL` environment variable. 
 
-By default, it is set to `http://infra-inference-scheduling-inference-gateway-istio.llm-d-inference-scheduler.svc.cluster.local:80`, which assumes you have deployed the [Intelligent Inference Scheduling](../inference-scheduling/README.md) stack in the `llm-d-inference-scheduler` namespace. 
+By default, it is set to `http://infra-optimized-baseline-inference-gateway-istio.llm-d-inference-scheduler.svc.cluster.local:80`, which assumes you have deployed the [optimized baseline](../optimized-baseline/README.md) stack in the `llm-d-inference-scheduler` namespace. 
 
-If your Inference Gateway is deployed elsewhere, or if you are using a different service name (e.g., based on the [Gateway Provider](../prereq/gateway-provider/README.md) guide), export the variable before running helmfile:
+If your llm-d router is deployed elsewhere, or if you are using a different service name (e.g., based on the [Gateway Provider](../prereq/gateway-provider/README.md) guide), export the variable before running helmfile:
 
 ```bash
-export IGW_BASE_URL="<your-inference-gateway-service-url>"
+export IGW_BASE_URL="<your-llm-d-router-service-url>"
 ```
 
 ### Step 2: Choose your Queue Implementation

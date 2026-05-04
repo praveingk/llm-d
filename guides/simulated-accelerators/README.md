@@ -1,6 +1,6 @@
 # Feature: llm-d Accelerator Simulation
 
-## **Automated Testing Coverage** : Medium (tested nightly on OpenShift)
+[![Nightly - Simulated Accelerators E2E (OpenShift)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-simulated-accelerators.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-simulated-accelerators.yaml)
 
 ## Overview
 
@@ -10,7 +10,7 @@ This guide demonstrates how to deploy the simulator `ghcr.io/llm-d/llm-d-inferen
 
 ## Prerequisites
 
-- Have the [proper client tools installed on your local system](../prereq/client-setup/README.md) to use this guide.
+- Have the [proper client tools installed on your local system](../../helpers/client-setup/README.md) to use this guide.
 - Configure and deploy your [Gateway control plane](../prereq/gateway-provider/README.md).
 - Have the [Monitoring stack](../../docs/monitoring/README.md) installed on your system.
 - Create a namespace for installation.
@@ -19,8 +19,6 @@ This guide demonstrates how to deploy the simulator `ghcr.io/llm-d/llm-d-inferen
   export NAMESPACE=llm-d-sim # or any other namespace (shorter names recommended)
   kubectl create namespace ${NAMESPACE}
   ```
-
-- [Choose an llm-d version](../prereq/client-setup/README.md#llm-d-version)
 
 **_NOTE:_** Unlike other examples which require models, the simulator stubs the vLLM server and so no HuggingFace token is needed.
 
@@ -52,7 +50,7 @@ helmfile apply -e kgateway -n ${NAMESPACE}     # deprecated migration path
 
 To see what gateway options are supported refer to our [gateway provider prereq doc](../prereq/gateway-provider/README.md#supported-providers). Gateway configurations per provider are tracked in the [gateway-configurations directory](../prereq/gateway-provider/common-configurations/).
 
-You can also customize your gateway, for more information on how to do that see our [gateway customization docs](../../docs/customizing-your-gateway.md).
+You can also customize your gateway, for more information on how to do that see our [gateway customization docs](../04_customizing_a_guide.md).
 
 ### Install HTTPRoute
 
@@ -77,7 +75,7 @@ kubectl apply -f httproute.gke.yaml -n ${NAMESPACE}
 ```bash
 helm list -n ${NAMESPACE}
 NAME        NAMESPACE   REVISION   UPDATED                               STATUS     CHART                       APP VERSION
-gaie-sim    llm-d-sim   1          2025-08-24 11:44:26.88254 -0700 PDT   deployed   inferencepool-v1.4.0   v1.4.0
+gaie-sim    llm-d-sim   1          2025-08-24 11:44:26.88254 -0700 PDT   deployed   inferencepool-v1.5.0        v1.5.0
 infra-sim   llm-d-sim   1          2025-08-24 11:44:23.11688 -0700 PDT   deployed   llm-d-infra-v1.4.0          v0.4.0
 ms-sim      llm-d-sim   1          2025-08-24 11:44:32.17112 -0700 PDT   deployed   llm-d-modelservice-v0.4.9   v0.4.0
 ```
@@ -116,7 +114,7 @@ replicaset.apps/ms-sim-llm-d-modelservice-prefill-76c86dd9f8   1         1      
 
 ## Using the stack
 
-For instructions on getting started making inference requests see [our docs](../../docs/getting-started-inferencing.md)
+For instructions on getting started making inference requests see [our docs](../02_verifying_a_guide.md)
 
 ## Cleanup
 
@@ -136,4 +134,4 @@ helm uninstall ms-sim -n ${NAMESPACE}
 
 ## Customization
 
-For information on customizing a guide and tips to build your own, see [our docs](../../docs/customizing-a-guide.md)
+For information on customizing a guide and tips to build your own, see [our docs](../04_customizing_a_guide.md)

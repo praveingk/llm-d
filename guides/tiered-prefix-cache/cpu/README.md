@@ -7,8 +7,7 @@ This guide provides recipes to offload prefix cache to CPU RAM via the vLLM nati
 ## Prerequisites
 
 * All prerequisites from the [upper level](../README.md).
-* Have the [proper client tools installed on your local system](../../prereq/client-setup/README.md) to use this guide.
-* Ensure your cluster infrastructure is sufficient to [deploy high scale inference](../../prereq/infrastructure/README.md).
+* Have the [proper client tools installed on your local system](../../../helpers/client-setup/README.md) to use this guide.
 * Configure and deploy your [Gateway control plane](../../prereq/gateway-provider/README.md).
 * Have the [Monitoring stack](../../../docs/monitoring/README.md) installed on your system.
 * Create a namespace for installation.
@@ -18,8 +17,7 @@ This guide provides recipes to offload prefix cache to CPU RAM via the vLLM nati
   kubectl create namespace ${NAMESPACE}
   ```
 
-* [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](../../prereq/client-setup/README.md#huggingface-token) to pull models.
-* [Choose an llm-d version](../../prereq/client-setup/README.md#llm-d-version)
+* [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](../../../helpers/hf-token.md) to pull models.
 
 ## Installation
 
@@ -60,7 +58,7 @@ kubectl apply -k ./manifests/vllm/lmcache-connector -n ${NAMESPACE}
 To deploy the `InferencePool`, select your provider below.
 
 > [!WARNING]
-> `kgateway` is deprecated in llm-d and will be removed in the next release. Prefer `agentgateway` for new self-installed inference deployments. The current Gateway API Inference Extension chart uses `provider.name=none` for the `agentgateway` path; see the upstream [`inferencepool` chart values for v1.4.0](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/v1.4.0/config/charts/inferencepool/values.yaml).
+> `kgateway` is deprecated in llm-d and will be removed in the next release. Prefer `agentgateway` for new self-installed inference deployments. The current Gateway API Inference Extension chart uses `provider.name=none` for the `agentgateway` path; see the upstream [`inferencepool` chart values for v1.5.0](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/v1.5.0/config/charts/inferencepool/values.yaml).
 
 <!-- TABS:START -->
 
@@ -76,7 +74,7 @@ helm install llm-d-infpool \
     -f ./manifests/inferencepool/values.yaml \
     --set "provider.name=gke" \
     oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool \
-    --version v1.4.0
+    --version v1.5.0
 ```
 
 <!-- TAB:Istio -->
@@ -91,7 +89,7 @@ helm install llm-d-infpool \
     -f ./manifests/inferencepool/values.yaml \
     --set "provider.name=istio" \
     oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool \
-    --version v1.4.0
+    --version v1.5.0
 ```
 
 <!-- TAB:Agentgateway -->
@@ -106,7 +104,7 @@ helm install llm-d-infpool \
     -f ./manifests/inferencepool/values.yaml \
     --set "provider.name=none" \
     oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool \
-    --version v1.4.0
+    --version v1.5.0
 ```
 
 <!-- TABS:END -->

@@ -1,48 +1,64 @@
-# High performance distributed inference on Kubernetes with llm-d
+# Well-Lit Path Guides
 
-Our guides provide tested and benchmarked recipes and Helm charts to serve large language models (LLMs) at peak performance with best practices common to production deployments. A familiarity with basic deployment and operation of Kubernetes is assumed.
-
-> [!TIP]
-> If you want to learn by doing, follow a [step-by-step first deployment with QUICKSTART.md](./QUICKSTART.md).
-
-## Who are these guides (and llm-d) for?
-
-These guides are targeted at startups and enterprises deploying production LLM serving that want the best possible performance while minimizing operational complexity. State of the art LLM inference involves multiple optimizations that offer meaningful tradeoffs, depending on use case. The guides help identify those key optimizations, understand their tradeoffs, and verify the gains against your own workload.
-
-We focus on the following use cases:
-
-* Deploying a self-hosted LLM behind a single workload across tens or hundreds of nodes
-* Running a production model-as-a-service platform that supports many users and workloads sharing one or more LLM deployments
-
-## Well-Lit Path Guides
-
-A well-lit path is a documented, tested, and benchmarked solution of choice to reduce adoption risk and maintenance cost. These are the central best practices common to production deployments of large language model serving.
-
-We currently offer the following tested and benchmarked paths to help you deploy large models:
-
-1. [Intelligent Inference Scheduling](./inference-scheduling/README.md) - Deploy [vLLM](https://docs.vllm.ai) behind the [Inference Gateway (IGW)](https://github.com/kubernetes-sigs/gateway-api-inference-extension) to decrease latency and increase throughput via [precise prefix-cache aware routing](./precise-prefix-cache-aware/README.md) and [customizable scheduling policies](https://github.com/llm-d/llm-d-inference-scheduler/blob/main/docs/architecture.md).
-2. [Prefill/Decode Disaggregation](./pd-disaggregation/README.md) - Reduce time to first token (TTFT) and get more predictable time per output token (TPOT) by splitting inference into prefill servers handling prompts and decode servers handling responses, primarily on large models such as Llama-70B and when processing very long prompts.
-3. [Wide Expert-Parallelism](./wide-ep-lws/README.md) - Deploy very large Mixture-of-Experts (MoE) models like [DeepSeek-R1](https://huggingface.co/deepseek-ai/DeepSeek-R1) and significantly reduce end-to-end latency and increase throughput by scaling up with [Data Parallelism and Expert Parallelism](https://docs.vllm.ai/en/latest/serving/data_parallel_deployment.html) over fast accelerator networks.
-4. [Tiered Prefix Cache](./tiered-prefix-cache/README.md) - Increase prefix cache reuse, reduce time to first token (TTFT) and increase throughput for long context or high concurrency workloads by adding tiered prefix cache (e.g., offloading to CPU memory) beyond accelerator memory. Tiered prefix cache can be combined with any of the three well-lit paths above.
+Our well-lit path guides are documented, tested, and benchmarked recipes to serve LLMs with best-practices for high performance.
 
 > [!IMPORTANT]
-> These guides are intended to be a starting point for your own configuration and deployment of model servers. Our Helm charts provide basic reusable building blocks for vLLM deployments and inference scheduler configuration within these guides but will not support the full range of all possible configurations. Both guides and charts depend on features provided and supported in the [vLLM](https://github.com/vllm-project/vllm) and [inference gateway](https://github.com/kubernetes-sigs/gateway-api-inference-extension) open source projects.
+> These guides are intended to be a starting point for your own configuration and deployment of model servers. Our manifests provide basic reusable building blocks for vLLM deployments and llm-d router configuration within these guides but will not support the full range of all possible configurations.
+
+We currently offer the following:
+
+### Intelligent Routing
+
+* [Optimized Baseline](./optimized-baseline/README.md) - Deploy vLLM with prefix-cache and load-aware routing enabled by the llm-d EPP.
+* [Predicted Latency-Based Routing](./predicted-latency-based-scheduling/README.md) - Enhance optimized baseline with real-time predictions of request latency (via a live-trained XGBoost model) rather than heuristic-based combinations of utilization metrics like queue depth or KV-cache utilization.
+
+### Advanced KV-Cache Management
+
+* [Precise Prefix Cache Routing](./precise-prefix-cache-aware/README.md) - Enhance optimized baseline with precise global indexing of the vLLM KV cache state.
+* [Tiered Prefix Cache](./tiered-prefix-cache/README.md) - Offload KV caches beyond accelerator memory (e.g. to CPU or disk), increasing the "KV-working set size" for multi-turn inference request patterns.
+
+### Serving Large Models
+
+* [Prefill/Decode Disaggregation](./pd-disaggregation/README.md) - Split inference into specialized prefill and decode instances, improving throughput and quality of service stability for medium and large models like `openai/gpt-oss-120b`.
+* [Wide Expert-Parallelism](./wide-ep-lws/README.md) - Deploy large Mixture-of-Experts (MoE) models like `deepseek-ai/DeepSeek-R1` over multiple nodes via DP/EP configuration, increasing available KV cache space and throughput.
+
+### Operational Excellence
+
+* [Flow Control](./flow-control.md): Intelligent request queuing for multi-tenant deployments and managing traffic spikes.
+* [Workload Autoscaling](./workload-autoscaling/README.md) - autoscale the LLM service via proactive, SLO-aware signals that reflect the true state of the inference system — queue depth, in-flight request counts, and KV cache pressure — so that capacity can be added before end-user latency is impacted.
+
+## Experimental Guides
+
+* [Asynchronous Processing](./asynchronous-processing/README.md) - process inference requests asynchronously using a queue-based architecture. This is ideal for latency-insensitive batch workloads or for filling "slack" capacity in your inference pool.
+* [Batch Gateway](./batch-gateway/README.md) - submit, track, and manage large-scale batch inference jobs via an OpenAI-compatible Batch API. Batch Gateway enables efficient processing of batch workloads coexisting with interactive workloads on shared infrastructure.
 
 ## Supporting Guides
 
 Our supporting guides address common operational challenges with model serving at scale:
 
-* [Simulating model servers](./simulated-accelerators/README.md) can deploy a vLLM model server simulator that allows testing inference scheduling and orchestration at scale as each instance does not need accelerators.
+* [Simulating model servers](./simulated-accelerators/README.md) can deploy a vLLM model server simulator that allows testing optimized baseline and orchestration at scale as each instance does not need accelerators.
+* [Benchmark](../helpers/benchmark.md) demonstrates how to use automation for running benchmarks against the llm-d stack.
 
-## Other Guides
+## Nightly Testing
 
-The following guides have been provided by the community but do not fully integrate into the llm-d configuration structure yet and are not fully supported as well-lit paths:
+Auto-updated from GitHub Actions:
 
-* Coming Soon!
+| Guide | OCP | CKS | GKE |
+|-------|-----|-----|-----|
+| [Optimized Baseline](./optimized-baseline/README.md) | [![OCP](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-optimized-baseline-ocp.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-optimized-baseline-ocp.yaml) | [![CKS](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-optimized-baseline-cks.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-optimized-baseline-cks.yaml) | [![GKE](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-optimized-baseline-gke.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-optimized-baseline-gke.yaml) |
+| [Precise Prefix Cache Aware Routing](./precise-prefix-cache-aware/README.md) | [![OCP](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-precise-prefix-cache-ocp.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-precise-prefix-cache-ocp.yaml) | [![CKS](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-precise-prefix-cache-cks.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-precise-prefix-cache-cks.yaml) | [![GKE](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-precise-prefix-cache-gke.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-precise-prefix-cache-gke.yaml) |
+| [P/D Disaggregation](./pd-disaggregation/README.md) | NOT TESTED IN CI | [![CKS](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-cks.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-cks.yaml) | NOT TESTED IN CI |
+| [Wide Expert Parallelism](./wide-ep-lws/README.md) | NOT TESTED IN CI | NOT TESTED IN CI | NOT TESTED IN CI |
+| [Tiered Prefix Cache](./tiered-prefix-cache/README.md) | [![OCP](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-tiered-prefix-cache-ocp.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-tiered-prefix-cache-ocp.yaml) | NOT TESTED IN CI | NOT TESTED IN CI |
+| [Workload Autoscaling (WVA)](./workload-autoscaling/README.md) | [![OCP](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wva-ocp.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wva-ocp.yaml) | [![CKS](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wva-cks.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wva-cks.yaml) | NOT TESTED IN CI |
 
-> [!NOTE]
-> New guides added to this list enable at least one of the core well-lit paths but may directly include prerequisite steps specific to new hardware or infrastructure providers without full abstraction. A guide added here is expected to eventually become part of an existing well-lit path.
-
-## Known Issues
-
-* In Release v0.4.0, the `wide-ep-lws` will crash loop due to a deprecated logging flag on the `routing-proxy` sidecar. This is fixed in [commit 83dd587](https://github.com/llm-d/llm-d/commit/83dd587dd847498820314e8144aadb4fa90d451f).
+<!--
+| Guide | OCP | CKS | GKE |
+|-------|-----|-----|-----|
+| [Optimized Baseline](./optimized-baseline/README.md) | [![OCP](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-optimized-baseline-ocp.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-optimized-baseline-ocp.yaml) | [![CKS](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-optimized-baseline-cks.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-optimized-baseline-cks.yaml) | [![GKE](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-optimized-baseline-gke.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-optimized-baseline-gke.yaml) |
+| [Precise Prefix Cache Aware Routing](./precise-prefix-cache-aware/README.md) | [![OCP](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-precise-prefix-cache-ocp.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-precise-prefix-cache-ocp.yaml) | [![CKS](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-precise-prefix-cache-cks.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-precise-prefix-cache-cks.yaml) | [![GKE](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-precise-prefix-cache-gke.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-precise-prefix-cache-gke.yaml) |
+| [P/D Disaggregation](./pd-disaggregation/README.md) | [![OCP](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-ocp.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-ocp.yaml) | [![CKS](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-cks.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-cks.yaml) | [![GKE](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-gke.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-gke.yaml) |
+| [Wide Expert Parallelism](./wide-ep-lws/README.md) | [![OCP](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wide-ep-lws-ocp.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wide-ep-lws-ocp.yaml) | [![CKS](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wide-ep-lws-cks.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wide-ep-lws-cks.yaml) | [![GKE](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wide-ep-lws-gke.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wide-ep-lws-gke.yaml) |
+| [Tiered Prefix Cache](./tiered-prefix-cache/README.md) | [![OCP](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-tiered-prefix-cache-ocp.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-tiered-prefix-cache-ocp.yaml) | | |
+| [Workload Autoscaling (WVA)](./workload-autoscaling/README.md) | [![OCP](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wva-ocp.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wva-ocp.yaml) | [![CKS](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wva-cks.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-wva-cks.yaml) | |
+-->

@@ -25,7 +25,7 @@ We can, therefore, compose the WideEP deployment with the existing scorers (for 
 
 ### Why This is Experimental
 
-We are currently working on hardenening the process management, health checking, and probes in vLLM to handle better this style of deployment. Once this is complete, we will upgrade this guide to the default.
+We are currently working on hardening the process management, health checking, and probes in vLLM to handle better this style of deployment. Once this is complete, we will upgrade this guide to the default.
 
 ## Overview
 
@@ -44,14 +44,17 @@ In this example, we will demonstrate a deployment of `DeepSeek-R1-0528` with:
 
 This guide requires 32 Nvidia H200 or B200 GPUs and InfiniBand or RoCE RDMA networking. Check `modelserver/base/decode.yaml` and `modelserver/base/prefill.yaml` for detailed resource requirements.
 
+> [!NOTE]
+> The pods leveraging inter-node EP must be deployed in a cluster environment with full mesh
+> network connectivity. The DeepEP backend used in WideEP requires All-to-All RDMA
+> connectivity. Every NIC on a host must be able to communicate with every NIC on all other
+> hosts. Networks restricted to communicating only between matching NIC IDs (rail-only
+> connectivity) will fail.
+
 ## Prerequisites
 
-* Have the [proper client tools installed on your local system](../../prereq/client-setup/README.md) to use this guide.
-* Ensure your cluster infrastructure is sufficient to [deploy high scale inference](../../prereq/infrastructure/README.md)
-  * You must have high speed inter-accelerator networking
-  * The pods leveraging inter-node EP must be deployed in a cluster environment with full mesh network connectivity.
-    * **_NOTE:_** The DeepEP backend used in WideEP requires All-to-All RDMA connectivity. Every NIC on a host must be able to communicate with every NIC on all other hosts. Networks restricted to communicating only between matching NIC IDs (rail-only connectivity) will fail.
-  * You have deployed the [LeaderWorkerSet optional controller](../../prereq/infrastructure/README.md#optional-install-leaderworkerset-for-multi-host-inference)
+* Have the [proper client tools installed on your local system](../../../helpers/client-setup/README.md) to use this guide.
+* You have deployed the [LeaderWorkerSet controller](https://lws.sigs.k8s.io/docs/installation/)
 * Configure and deploy your [Gateway control plane](../../prereq/gateway-provider/README.md). Note that the Gateway must support multi-port (e.g. Istio 1.29.1)
 * Have the [Monitoring stack](../../../docs/monitoring/README.md) installed on your system.
 * Create a namespace for installation.
@@ -61,8 +64,7 @@ This guide requires 32 Nvidia H200 or B200 GPUs and InfiniBand or RoCE RDMA netw
   kubectl create namespace ${NAMESPACE}
   ```
 
-* [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](../../prereq/client-setup/README.md#huggingface-token) to pull models.
-* [Choose an llm-d version](../../prereq/client-setup/README.md#llm-d-version)
+* [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](../../../helpers/hf-token.md) to pull models.
 
 ## Installation
 
@@ -78,7 +80,7 @@ Deploy the Gateway and HTTPRoute using the [gateway recipe](../../recipes/gatewa
 
 To see what gateway options are supported refer to our [gateway provider prereq doc](../../prereq/gateway-provider/README.md#supported-providers). Gateway configurations per provider are tracked in the [gateway-configurations directory](../../prereq/gateway-provider/common-configurations/).
 
-You can also customize your gateway, for more information on how to do that see our [gateway customization docs](../../../docs/customizing-your-gateway.md).
+You can also customize your gateway, for more information on how to do that see our [gateway customization docs](../../04_customizing_a_guide.md).
 
 ### Deploy Model Servers
 
@@ -106,7 +108,7 @@ helm install llm-d-infpool \
   -f ./manifests/inferencepool.values.yaml \
   --set "provider.name=istio" \
   oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool \
-  --version v1.4.0
+  --version v1.5.0
 ```
 
 ## Verifying the installation
@@ -116,7 +118,7 @@ helm install llm-d-infpool \
 ```bash
 helm list -n ${NAMESPACE}
 NAME            NAMESPACE       REVISION    UPDATED                                 STATUS      CHART                       APP VERSION
-llm-d-infpool   llm-d-wide-ep   1           2025-08-24 13:14:53.355639 -0700 PDT    deployed    inferencepool-v1.4.0   v0.3.0
+llm-d-infpool   llm-d-wide-ep   1           2025-08-24 13:14:53.355639 -0700 PDT    deployed    inferencepool-v1.5.0   v0.3.0
 ```
 
 * Out of the box with this example you should have the following resources (if using Istio):
@@ -158,9 +160,9 @@ statefulset.apps/wide-ep-llm-d-prefill-1  1/1     2m13s
 
 ## Using the stack
 
-For instructions on getting started making inference requests see [our docs](../../../docs/getting-started-inferencing.md)
+For instructions on getting started making inference requests see [our docs](../../02_verifying_a_guide.md)
 
-**_NOTE:_** This example particularly benefits from utilizing stern as described in the [getting-started-inferencing docs](../../../docs/getting-started-inferencing.md#following-logs-for-requests), because while we only have 3 inferencing pods, it has 16 vllm servers or ranks.
+**_NOTE:_** This example particularly benefits from utilizing stern as described in the [getting-started-inferencing docs](../../02_verifying_a_guide.md#following-logs-for-requests), because while we only have 3 inferencing pods, it has 16 vllm servers or ranks.
 
 **_NOTE:_** Compared to the other examples, this one takes anywhere between 7-10 minutes for the vllm API servers to startup so this might take longer before you can interact with this example.
 

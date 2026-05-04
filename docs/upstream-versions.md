@@ -14,7 +14,7 @@ Pinned in `docker/Dockerfile.cuda` (and variants):
 | **vLLM** | `d7de043d55d1dd629554467e23874097e1c48993` | commit SHA | `docker/Dockerfile.cuda` line 68 (`VLLM_COMMIT_SHA`) | [vllm-project/vllm](https://github.com/vllm-project/vllm) |
 | **CUDA** | `12.9.1` | version | `docker/Dockerfile.cuda` lines 17-19 | [NVIDIA CUDA](https://developer.nvidia.com/cuda-toolkit) |
 | **Python** | `3.12` | version | `docker/Dockerfile.cuda` line 23 | [python/cpython](https://github.com/python/cpython) |
-| **GDRCOPY** | `v2.5.1` | tag | `docker/Dockerfile.cuda` line 35 | [NVIDIA/gdrcopy](https://github.com/NVIDIA/gdrcopy) |
+| **GDRCOPY** | `v2.5.2` | tag | `docker/Dockerfile.cuda` line 33 | [NVIDIA/gdrcopy](https://github.com/NVIDIA/gdrcopy) |
 | **UCX** | `v1.20.0` | tag | `docker/Dockerfile.cuda` line 38 | [openucx/ucx](https://github.com/openucx/ucx) |
 | **NVSHMEM** | `v3.5.19-1` | tag | `docker/Dockerfile.cuda` line 42 | [NVIDIA/nvshmem](https://github.com/NVIDIA/nvshmem) |
 | **NIXL** | `0.10.0` | version | `docker/Dockerfile.cuda` line 46 | [ai-dynamo/nixl](https://github.com/ai-dynamo/nixl) |
@@ -32,7 +32,7 @@ Pinned in guide helmfiles (`guides/*/helmfile.yaml.gotmpl`):
 | Dependency | Current Pin | File Location | Upstream Repo / Registry |
 |-----------|-------------|---------------|--------------------------|
 | **llm-d-infra chart** | `v1.4.0` | All `helmfile.yaml.gotmpl` files | [llm-d-incubation/llm-d-infra](https://github.com/llm-d-incubation/llm-d-infra) (`https://llm-d-incubation.github.io/llm-d-infra/`) |
-| **InferencePool chart** | `v1.4.0` | All `helmfile.yaml.gotmpl` files | [kubernetes-sigs/gateway-api-inference-extension](https://github.com/kubernetes-sigs/gateway-api-inference-extension) (`oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool`) |
+| **InferencePool chart** | `v1.5.0` | All `helmfile.yaml.gotmpl` files | [kubernetes-sigs/gateway-api-inference-extension](https://github.com/kubernetes-sigs/gateway-api-inference-extension) (`oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool`) |
 | **llm-d-modelservice chart** | `v0.4.7` | All `helmfile.yaml.gotmpl` files | [llm-d-incubation/llm-d-modelservice](https://github.com/llm-d-incubation/llm-d-modelservice) (`https://llm-d-incubation.github.io/llm-d-modelservice/`) |
 
 ## Gateway Provider Dependencies
@@ -44,9 +44,9 @@ Pinned in `guides/prereq/gateway-provider/`:
 | Dependency | Current Pin | File Location | Upstream Repo |
 |-----------|-------------|---------------|---------------|
 | **Gateway API CRDs** | `v1.5.1` | `install-gateway-provider-dependencies.sh` line 39 | [kubernetes-sigs/gateway-api](https://github.com/kubernetes-sigs/gateway-api) |
-| **Gateway API Inference Extension CRDs** | `v1.4.0` | `install-gateway-provider-dependencies.sh` line 46 | [kubernetes-sigs/gateway-api-inference-extension](https://github.com/kubernetes-sigs/gateway-api-inference-extension) |
+| **Gateway API Inference Extension CRDs** | `v1.5.0` | `install-gateway-provider-dependencies.sh` line 46 | [kubernetes-sigs/gateway-api-inference-extension](https://github.com/kubernetes-sigs/gateway-api-inference-extension) |
 | **Istio** | `1.29.1` | `istio.helmfile.yaml` | [istio/istio](https://github.com/istio/istio) |
-| **kgateway (deprecated llm-d install path)** | `v2.2.1` | `kgateway.helmfile.yaml` | [kgateway-dev/kgateway](https://github.com/kgateway-dev/kgateway) (`ghcr.io/kgateway-dev/charts/agentgateway*`) |
+| **kgateway (deprecated llm-d install path)** | `v2.2.3` | `kgateway.helmfile.yaml` | [kgateway-dev/kgateway](https://github.com/kgateway-dev/kgateway) (`ghcr.io/kgateway-dev/charts/agentgateway*`) |
 | **agentgateway (preferred path)** | `v1.0.0` | `agentgateway.helmfile.yaml` | [agentgateway/agentgateway](https://github.com/agentgateway/agentgateway) |
 
 ## CI Workflow Dependencies
@@ -54,7 +54,7 @@ Pinned in `guides/prereq/gateway-provider/`:
 | Dependency | Current Pin | File Location | Notes |
 |-----------|-------------|---------------|-------|
 | **LeaderWorkerSet (LWS)** | `0.7.0` | `e2e-wide-ep-accelerator-test.yaml` line 387 | Also in nightly LWS workflows |
-| **InferencePool (GKE)** | `v1.4.0` | `e2e-wide-ep-accelerator-gke.yaml` line 46 | Also used in the nightly Wide EP and tiered-prefix-cache workflows |
+| **InferencePool (GKE)** | `v1.5.0` | `e2e-wide-ep-accelerator-gke.yaml` line 46 | Also used in the nightly Wide EP and tiered-prefix-cache workflows |
 
 ## Hardware-Specific vLLM Images
 
