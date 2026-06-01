@@ -64,6 +64,7 @@ cat guides/workload-autoscaling/wva-config/platform/ocp/configmap-patch.yaml
 ```
 
 OpenShift defaults are already set in the overlay:
+
 - `PROMETHEUS_BASE_URL=https://thanos-querier.openshift-monitoring.svc.cluster.local:9091`
 - `PROMETHEUS_TLS_INSECURE_SKIP_VERIFY=true`
 
@@ -224,7 +225,7 @@ Choose your platform and follow the corresponding section:
 # Setup
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
-export VERSION=${VERSION:-v0.6.0}
+export VERSION=${VERSION:-v0.7.0}
 export MON_NS=openshift-user-workload-monitoring
 
 # Download OpenShift-specific values
@@ -236,10 +237,11 @@ sed -i.bak "s|url:.*|url: https://thanos-querier.openshift-monitoring.svc.cluste
   echo "Edit ${TMPDIR:-/tmp}/prometheus-adapter-values.yaml to set prometheus.url"
 
 # Install
+export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
 helm upgrade -i prometheus-adapter prometheus-community/prometheus-adapter \
   --version 5.2.0 -n ${MON_NS} --create-namespace \
   -f ${TMPDIR:-/tmp}/prometheus-adapter-values.yaml \
-  -f guides/workload-autoscaling/components/prometheus-adapter/values-wva-external-metric.yaml
+  -f ${REPO_ROOT}/guides/workload-autoscaling/components/prometheus-adapter/values-wva-external-metric.yaml
 
 # Verify that WVA metric is discoverable by external metrics API
 kubectl get --raw "/apis/external.metrics.k8s.io/v1beta1" | jq .
@@ -272,7 +274,7 @@ YAML
 # Setup
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
-export VERSION=${VERSION:-v0.6.0}
+export VERSION=${VERSION:-v0.7.0}
 export MON_NS=${MON_NS:-llm-d-monitoring}
 
 # Download values
@@ -296,7 +298,7 @@ For Kind clusters with HTTPS Prometheus (configured in Platform-Specific Configu
 # Setup
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
-export VERSION=${VERSION:-v0.6.0}
+export VERSION=${VERSION:-v0.7.0}
 export MON_NS=${MON_NS:-llm-d-monitoring}
 
 # Download values
@@ -329,7 +331,6 @@ helm upgrade -i prometheus-adapter prometheus-community/prometheus-adapter \
 > **Note**: WVA creates the `prometheus-ca` ConfigMap in the monitoring namespace using the configured CA cert settings. This ConfigMap is required for Prometheus Adapter.
 
 **Verify installation**: `kubectl get pods -n ${MON_NS} -l app.kubernetes.io/name=prometheus-adapter`
-
 
 ## FAQ
 

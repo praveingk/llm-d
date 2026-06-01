@@ -41,8 +41,8 @@ CUDA_MINOR := $(word 2,$(subst ., ,$(CUDA_VERSION)))
 # USE_SCCACHE: set to true to enable sccache (requires AWS credentials)
 USE_SCCACHE ?= false
 
-# MAX_JOBS: parallel compilation jobs (reduce to avoid OOM, e.g., MAX_JOBS=2)
-MAX_JOBS ?= 2
+# MAX_JOBS: parallel compilation jobs (reduce to avoid OOM, e.g., MAX_JOBS=1)
+MAX_JOBS ?= 3
 
 # TORCH_CUDA_ARCH_LIST: CUDA architectures to build for
 # TORCH_CUDA_ARCH_LIST ?= 7.0;7.5;8.0;8.6;8.9;9.0;9.0a;10.0;12.0+PTX
@@ -92,11 +92,13 @@ ENABLE_EFA ?= false
 ENABLE_GB200 ?= false
 
 # Override NVSHMEM version and DeepEP repo/version for GB200 builds
+# and install NVSHMEM via pypi rather than from source
 NVSHMEM_VERSION_OVERRIDE ?=
 DEEPEP_REPO_OVERRIDE ?=
 DEEPEP_VERSION_OVERRIDE ?=
 INSTALL_OFFLOADING_CONNECTOR_OVERRIDE ?=
 ifeq ($(ENABLE_GB200), true)
+	NVSHMEM_BUILD_FROM_SOURCE := "false"
 	NVSHMEM_VERSION_OVERRIDE := $(GB200_NVSHMEM_VERSION)
 	DEEPEP_REPO_OVERRIDE := $(GB200_DEEPEP_REPO)
 	DEEPEP_VERSION_OVERRIDE := $(GB200_DEEPEP_VERSION)

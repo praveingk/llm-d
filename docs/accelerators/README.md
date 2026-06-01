@@ -6,21 +6,22 @@ llm-d supports multiple accelerator vendors and we are expanding our coverage.
 
 Maintainers for each accelerator type are listed below. See our well-lit path guides for details of deploying on each hardware type.
 
-| Vendor | Models | Maintainers | Supported Well-lit Paths |
-| --- | --- | --- | --- |
-| AMD | ROCm | Kenny Roche (<Kenny.Roche@amd.com>), Vincent Cave (<Vincent.Cave@amd.com>) | [optimized baseline](../../guides/optimized-baseline/README.md), [Prefill/Decode Disaggregation](../../guides/pd-disaggregation/README.amd.md) |
-| CPU | x86_64 | Hongming Zheng (@ZhengHongming888, <hongming.zheng@intel.com>) | [optimized baseline](../../guides/optimized-baseline/README.md) |
-| Google | [TPU](../infra-providers/gke/README.md#llm-d-on-google-kubernetes-engine-gke) | Edwin Hernandez (@Edwinhr716), Cong Liu (@liu-cong, <congliu.thu@gmail.com>) | [optimized baseline](../../guides/optimized-baseline/README.md), [Prefill/Decode Disaggregation](../../guides/pd-disaggregation/README.md) |
-| Intel | XPU | Yuan Wu (@yuanwu2017, <yuan.wu@intel.com>) | [optimized baseline](../../guides/optimized-baseline/README.md), [Prefill/Decode Disaggregation](../../guides/pd-disaggregation/README.md) |
-| Intel | HPU | Sakari Poussa (@poussa, <sakari.poussa@intel.com>) | [optimized baseline](../../guides/optimized-baseline/README.md) |
-| NVIDIA | GPU | Will Eaton (<weaton@redhat.com>), Greg (<grpereir@redhat.com>) | All |
-| Rebellions | NPU | Jinmoo Seok (@rebel-jinmoo, <jinmoo_seok@rebellions.ai>), Minwook Ahn (@rebel-minwook, <minwook.ahn@rebellions.ai>) | [optimized baseline](../../guides/optimized-baseline/README.md) |
+| Vendor | Models | Maintainers |
+| --- | --- | --- |
+| AMD | ROCm | Kenny Roche (Kenny.Roche@amd.com), Vincent Cave (Vincent.Cave@amd.com) |
+| CPU | x86_64 | Hongming Zheng (@ZhengHongming888, hongming.zheng@intel.com) |
+| Google | [TPU](../infra-providers/gke/README.md#llm-d-on-google-kubernetes-engine-gke) | Edwin Hernandez (@Edwinhr716), Cong Liu (@liu-cong, congliu.thu@gmail.com) |
+| Intel | XPU | Yuan Wu (@yuanwu2017, yuan.wu@intel.com) |
+| Intel | HPU | Sakari Poussa (@poussa, sakari.poussa@intel.com) |
+| NVIDIA | GPU | Will Eaton (weaton@redhat.com), Greg (grpereir@redhat.com) |
+| Rebellions | NPU | Jinmoo Seok (@rebel-jinmoo, jinmoo_seok@rebellions.ai), Minwook Ahn (@rebel-minwook, minwook.ahn@rebellions.ai) |
 
 ## Requirements
 
 We welcome contributions from accelerator vendors. To be referenced as a supported hardware vendor we require at minimum a publicly available container image that launches vLLM.
 
 For integration into the well-lit paths our standard for contribution is higher, **requiring**:
+
 - A named maintainer responsible for keeping guide contents up to date
 - Manual or automated verification of the guide deployment for each release
 
@@ -65,6 +66,16 @@ Intel Data Center GPU Max 1550 and Intel BMG GPUs (Battlemage G21) are supported
 
 For cluster prerequisites, ensure you have the [Intel Resource Drivers for Kubernetes](https://github.com/intel/intel-resource-drivers-for-kubernetes) installed.
 
+### XPU with RDMA
+
+For P/D disaggregation with RDMA-accelerated KV-cache transfer on Intel XPU, the following additional prerequisites apply:
+
+- An RDMA DRA driver exposing the `rdma-dranet` device class (e.g., [rdma-dranet](https://github.com/k8snetworkplumbingwg/rdma-dra-driver)).
+- GPU-NIC PCIe alignment for optimal transfer performance.
+- UCX transport configured with `ib,rc,ze_copy`.
+
+The RDMA overlay (`modelserver/xpu/vllm-rdma/`) reuses the standard XPU vLLM base and adds one RDMA DRA claim per pod plus RDMA-specific UCX transport settings. See the [P/D Disaggregation guide](../../guides/pd-disaggregation/README.md) for deployment instructions.
+
 ## Intel Gaudi (HPU)
 
 Intel Gaudi 1, Gaudi 2, and Gaudi 3 accelerators are supported via DRA. Ensure you have the [Intel Resource Drivers for Kubernetes](https://github.com/intel/intel-resource-drivers-for-kubernetes) installed on your cluster before deploying HPU guide variants.
@@ -88,7 +99,7 @@ Each vendor provides Device Plugins for their accelerators. The following plugin
 
 - [AMD ROCm Device Plugin](https://github.com/ROCm/k8s-device-plugin)
 - Google TPU Device Plugin (automatically enabled for TPU instances)
-- [Intel XPU Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/cmd/gpu_plugin/README.md)
+- [Intel XPU Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/cmd/gpu_plugin.md)
 - [Intel Gaudi Device Plugin](https://docs.habana.ai/en/latest/Installation_Guide/Additional_Installation/Kubernetes_Installation/Intel_Gaudi_Kubernetes_Device_Plugin.html)
 - [NVIDIA GPU Device Plugin](https://github.com/NVIDIA/k8s-device-plugin)
 - [Rebellions NPU Operator](https://docs.rbln.ai/latest/software/system_management/kubernetes/about_npu_operator.html)

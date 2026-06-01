@@ -1,8 +1,8 @@
 # P/D Disaggregation
 
-NOT TESTED IN CI in OCP and GKE [![Nightly - PD Disaggregation E2E (CKS)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-cks.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-cks.yaml)
+[![Nightly - PD Disaggregation E2E (GKE)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-gke.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-gke.yaml) [![Nightly - PD Disaggregation E2E (CKS)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-cks.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-cks.yaml)
 <!--
-[![Nightly - PD Disaggregation E2E (OpenShift)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-ocp.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-ocp.yaml) [![Nightly - PD Disaggregation E2E (CKS)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-cks.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-cks.yaml) [![Nightly - PD Disaggregation E2E (GKE)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-gke.yaml/badge.svg)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-gke.yaml)
+[![Nightly - PD Disaggregation E2E (OpenShift)](https://github.com/llm-d/llm-d/actions/workflows/nightly-e2e-pd-disaggregation-ocp.yaml/badge.svg)]
 -->
 
 ## Overview
@@ -43,6 +43,7 @@ This guide includes configuration for the following accelerators:
 | Google TPU          | `modelserver/tpu/vllm/`    | GKE TPU, validated each release                          |
 | AMD GPU             | `modelserver/amd/vllm/`    | AMD GPU, community contributed                           |
 | Intel XPU           | `modelserver/xpu/vllm/`    | Intel Data Center GPU Max 1550+, community contributed   |
+| Intel XPU + RDMA    | `modelserver/xpu/vllm-rdma/` | Intel XPU with RDMA via UCX (`ib,rc,ze_copy`), requires RDMA DRA driver |
 | Intel Gaudi (HPU)   | `modelserver/hpu/vllm/`    | Gaudi 1/2/3 with DRA support, community contributed      |
 
 > [!NOTE]
@@ -50,24 +51,29 @@ This guide includes configuration for the following accelerators:
 
 ## Prerequisites
 
-- Have the [proper client tools installed on your local system](../../helpers/client-setup/README.md) to use this guide.
-- Checkout llm-d repo:
+* Have the [proper client tools installed on your local system](../../helpers/client-setup/README.md) to use this guide.
+* Checkout llm-d repo:
+
 ```bash
 export branch="main" # branch, tag, or commit hash
 git clone https://github.com/llm-d/llm-d.git && cd llm-d && git checkout ${branch}
 ```
-- Set the following environment variables:
+* Set the following environment variables:
+
 ```bash
 export GAIE_VERSION=v1.5.0
+export ROUTER_CHART_VERSION=v0
 export GUIDE_NAME="pd-disaggregation"
 export NAMESPACE="llm-d-pd-disaggregation"
 export MODEL_NAME="openai/gpt-oss-120b"
 ```
-- Install the Gateway API Inference Extension CRDs:
+* Install the Gateway API Inference Extension CRDs:
+
 ```bash
 kubectl apply -k "https://github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=${GAIE_VERSION}"
 ```
-- Create a target namespace for the installation
+* Create a target namespace for the installation
+
 ```bash
 kubectl create namespace ${NAMESPACE}
 ```
@@ -81,12 +87,12 @@ kubectl create namespace ${NAMESPACE}
 This deploys the llm-d Router with an Envoy sidecar, it doesn't set up a Kubernetes Gateway.
 
 ```bash
+export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
 helm install ${GUIDE_NAME} \
-    oci://registry.k8s.io/gateway-api-inference-extension/charts/standalone \
-    -f guides/recipes/scheduler/base.values.yaml \
-    -f guides/recipes/scheduler/pd.values.yaml \
-    -f guides/${GUIDE_NAME}/scheduler/${GUIDE_NAME}.values.yaml \
-    -n ${NAMESPACE} --version ${GAIE_VERSION}
+    oci://ghcr.io/llm-d/charts/llm-d-router-standalone-dev \
+    -f ${REPO_ROOT}/guides/recipes/router/base.values.yaml \
+    -f ${REPO_ROOT}/guides/${GUIDE_NAME}/router/${GUIDE_NAME}.values.yaml \
+    -n ${NAMESPACE} --version ${ROUTER_CHART_VERSION}
 ```
 
 <details>
@@ -94,20 +100,19 @@ helm install ${GUIDE_NAME} \
 
 To employ a Kubernetes Gateway managed proxy instead of the standalone one, then instead of applying the standalone helm chart above, do the following:
 
-1. *Deploy a Kubernetes Gateway*. Follow [the gateway guides](../prereq/gateways) for step by step deployment for a Gateway named `llm-d-inference-gateway`. You only need to create one Gateway for your cluster, all guides can share one Gateway each with a separate HTTPRoute. 
+1. *Deploy a Kubernetes Gateway*. Follow [the gateway guides](../prereq/gateways) for step by step deployment for a Gateway named `llm-d-inference-gateway`. You only need to create one Gateway for your cluster, all guides can share one Gateway each with a separate HTTPRoute.
 2. *Deploy the llm-d Router and an HTTPRoute*. The following deploys the llm-d Router with an HttpRoute that connects it to the Gateway created in the previous step (set `provider.name` to the gateway provider you deployed):
 
 ```bash
+export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
 export PROVIDER_NAME=gke # other na, agentgateway or istio
 helm install ${GUIDE_NAME} \
-    oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool  \
-    -f guides/recipes/scheduler/base.values.yaml \
-    -f guides/recipes/scheduler/pd.values.yaml \
-    -f guides/${GUIDE_NAME}/scheduler/${GUIDE_NAME}.values.yaml \
+    oci://ghcr.io/llm-d/charts/llm-d-router-gateway-dev  \
+    -f ${REPO_ROOT}/guides/recipes/router/base.values.yaml \
+    -f ${REPO_ROOT}/guides/recipes/router/features/httproute-flags.yaml \
+    -f ${REPO_ROOT}/guides/${GUIDE_NAME}/router/${GUIDE_NAME}.values.yaml \
     --set provider.name=${PROVIDER_NAME} \
-    --set experimentalHttpRoute.enabled=true \
-    --set experimentalHttpRoute.inferenceGatewayName=llm-d-inference-gateway \
-    -n ${NAMESPACE} --version ${GAIE_VERSION}
+    -n ${NAMESPACE} --version ${ROUTER_CHART_VERSION}
 ```
 
 </details>
@@ -124,7 +129,7 @@ Apply the Kustomize overlays for your specific backend (defaulting to NVIDIA GPU
 > overlays deal with the specifics of each cloud's setup.
 
 ```bash
-export INFRA_PROVIDER=base # coreweave
+export INFRA_PROVIDER=base # base | coreweave | gke
 
 kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/${INFRA_PROVIDER}
 ```
@@ -134,8 +139,8 @@ kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/${INF
 > [!NOTE]
 > GKE provides [automatic application monitoring](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/configure-automatic-application-monitoring) out of the box. The llm-d [Monitoring stack](../../docs/monitoring/README.md) is not required for GKE, but it is available if you prefer to use it.
 
-- Install the [Monitoring stack](../../docs/monitoring/README.md).
-- Deploy the monitoring resources for this guide.
+* Install the [Monitoring stack](../../docs/monitoring/README.md).
+* Deploy the monitoring resources for this guide.
 
 ```bash
 kubectl apply -n ${NAMESPACE} -k guides/recipes/modelserver/components/monitoring-pd
@@ -157,6 +162,7 @@ export IP=$(kubectl get service ${GUIDE_NAME}-epp -n ${NAMESPACE} -o jsonpath='{
 ```bash
 export IP=$(kubectl get gateway llm-d-inference-gateway -n ${NAMESPACE} -o jsonpath='{.status.addresses[0].value}')
 ```
+
 </details>
 
 ### 2. Send Test Requests
@@ -188,14 +194,14 @@ The benchmark launches a pod (`llmdbench-harness-launcher`) that, in this case, 
 
 ### 1. Prepare the Benchmarking Suite
 
-- Download the benchmark script:
+* Download the benchmark script:
 
 ```bash
 curl -L -O https://raw.githubusercontent.com/llm-d/llm-d-benchmark/main/existing_stack/run_only.sh
 chmod u+x run_only.sh
 ```
 
-- [Create HuggingFace token](../../helpers/hf-token.md)
+* [Create HuggingFace token](../../helpers/hf-token.md)
 
 ### 2. Download the Workload Template
 
@@ -444,19 +450,19 @@ version: '0.1'
 
 </details>
 
-
 ## Comparing llm-d P/D disaggregation to a k8s service
 
 The following scripts run the same benchmark against a standard deployment and service running `openai/gpt-oss-120b`.
 
 #### Run Baseline (Aggregated)
 
-- Deploy (16 replicas of TP=1, with a standard k8s service)
+* Deploy (16 replicas of TP=1, with a standard k8s service)
+
 ```bash
-kubectl apply -n ${NAMESPACE} -f guides/pd-disaggregation/baseline/manifest.yaml
+kubectl apply -n ${NAMESPACE} -f ${REPO_ROOT}/guides/pd-disaggregation/baseline/manifest.yaml
 ```
 
-- Benchmark (using the same configuration as above):
+* Benchmark (using the same configuration as above):
 
 ```bash
 export IP=$(kubectl get service baseline -n ${NAMESPACE} -o jsonpath='{.spec.clusterIP}')
@@ -465,7 +471,6 @@ envsubst < 20_1_isl_osl.yaml > config-baseline.yaml
 ```
 
 For this workload (20:1 ISL:OSL, 45 QPS), llm-d disaggregation improved mean and P90 request latency by ~50%!
-
 
 | Metric                   | aggregated | llm-d        | Δ% |
 | :----------------------- | :--------- | :----------- | :------- |
@@ -476,9 +481,8 @@ For this workload (20:1 ISL:OSL, 45 QPS), llm-d disaggregation improved mean and
 | TTFT (Mean)              | 532ms      | 1400ms       | +170%    |
 | TTFT (P95)               | 1574ms     | 2471ms       | +57%     |
 
-
 > ![NOTE]
-> In aggregated setup, vLLM allocates all GPU resources to 
+> In aggregated setup, vLLM allocates all GPU resources to
 > processing prefills as they arrive. TTFT is elevated in the
 > disaggregated setup because less resources are allocated to
 > processing prefills.
