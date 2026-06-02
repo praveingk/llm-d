@@ -42,7 +42,7 @@ else
     MAKEFILE="Makefile"
 fi
 
-make -f "${MAKEFILE}" install
+PREFIX="${UCCL_PREFIX}" make -f "${MAKEFILE}" install
 
 cd /tmp
 rm -rf uccl
